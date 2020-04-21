@@ -40,9 +40,7 @@ def list_bot(server):
 def msg_list_bot(server):
     msg = '§7[假人列表]\n'
     new_list = list_bot(server)
-    print(new_list)
     for bot in new_list:
-        print(bot)
         msg += bot[0] + ' 位于[' + worlds[bot[1][0]] + '§r] (' + ','.join(
             [str(int(i)) for i in bot[1][1]]) + ')\n'
     return msg
