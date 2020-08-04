@@ -1,10 +1,14 @@
 # coding : utf-8
 import re
-from utils.rtext import RTextList,RText,RAction,RColor
+from utils.rtext import RTextList, RText, RAction, RColor
 
 bot_list = []
 
-worlds = ['§a主世界', '§d末地', '§4地狱']
+worlds = {
+    'minecraft:overworld': '§a主世界',
+    'minecraft:the_end': '§d末地',
+    'minecraft:the_nether': '§4地狱'
+}
 
 
 def say_lines(server, msg):
@@ -25,16 +29,21 @@ def joined_info(msg):
 
 def get_player_pos(server, player):
     PlayerInfoAPI = server.get_plugin_instance('PlayerInfoAPI')
-    return [
-        PlayerInfoAPI.getPlayerInfo(server, player, 'Dimension'),
-        PlayerInfoAPI.getPlayerInfo(server, player, 'Pos')
-    ]
+    dimension = PlayerInfoAPI.getPlayerInfo(server, player, 'Dimension')
+    pos = PlayerInfoAPI.getPlayerInfo(server, player, 'Pos')
+    return {
+        'player': player,
+        'dimension': dimension,
+        'x': int(pos[0]),
+        'y': int(pos[1]),
+        'z': int(pos[2]),
+    }
 
 
 def list_bot(server):
     new_list = []
     for bot in bot_list:
-        new_list.append([bot, get_player_pos(server, bot)])
+        new_list.append(get_player_pos(server, bot))
     return new_list
 
 
@@ -42,15 +51,16 @@ def msg_list_bot(server):
     if not len(bot_list):
         return '§7服务器还没有假人'
     new_list = list_bot(server)
-    msg=RTextList(RText("[假人列表]",color=RColor.gray))
+    print(new_list)
+    msg = RTextList(RText("[假人列表]", color=RColor.gray))
     for bot in new_list:
-            msg+=RTextList(
-                RText('\n[x] ',color=RColor.red)
-                    .h('下线该假人')
-                    .c(RAction.run_command,'/player '+bot[0]+' kill'),
-                RText(bot[0])
-                    .h(RText(' [' + worlds[bot[1][0]] + '§r] \n(' + ','.join([str(int(i)) for i in bot[1][1]]) + ') '))
-            )
+        msg += RTextList(
+            RText('\n[x] ', color=RColor.red)
+            .h('下线该假人')
+            .c(RAction.run_command, f'/player {bot["player"]} kill'),
+            RText(bot["player"])
+            .h(RText(f'[{worlds[bot["dimension"]]}§r] \n({bot["x"]},{bot["y"]},{bot["z"]}) '))
+        )
     return msg
 
 
@@ -74,9 +84,10 @@ def on_player_left(server, player):
 
 def on_load(server, old_module):
     global bot_list
-    if old_module:
+    if old_module and type(old_module.bot_list) == type(bot_list):
         bot_list = old_module.bot_list
+
 
 def on_server_startup(server):
     global bot_list
-    bot_list=[]
+    bot_list = []
