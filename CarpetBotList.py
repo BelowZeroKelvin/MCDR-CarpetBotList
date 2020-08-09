@@ -43,7 +43,10 @@ def get_player_pos(server, player):
 def list_bot(server):
     new_list = []
     for bot in bot_list:
-        new_list.append(get_player_pos(server, bot))
+        try:
+            new_list.append(get_player_pos(server, bot))
+        except:
+            bot_list.remove(bot)
     return new_list
 
 
@@ -51,7 +54,6 @@ def msg_list_bot(server):
     if not len(bot_list):
         return '§7服务器还没有假人'
     new_list = list_bot(server)
-    print(new_list)
     msg = RTextList(RText("[假人列表]", color=RColor.gray))
     for bot in new_list:
         msg += RTextList(
