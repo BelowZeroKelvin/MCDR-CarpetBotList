@@ -1,24 +1,25 @@
-# coding : utf-8
-import re
-from utils.rtext import RTextList, RText, RAction, RColor
-
-bot_list = []
-
-worlds = {
-    'minecraft:overworld': '§a主世界',
-    'minecraft:the_end': '§d末地',
-    'minecraft:the_nether': '§4地狱'
+PLUGIN_METADATA = {
+    'id': 'carpetbotlist',
+    'version': '1.0.0',
+    'name': 'CarpetBotList',
+    'description': 'Show carpet bot list',
+    'author': 'ZeroKelvin',
+    'link': 'https://github.com/BelowZeroKelvin/MCDR-CarpetBotList',
+    'dependencies': {
+        'mcdreforged': '>=1.0.0'
+    },
 }
 
+import re
+from mcdreforged.api.rtext import RTextList, RText, RAction, RColor
+from mcdreforged.api.all import new_thread
+bot_list = []
 
-def say_lines(server, msg):
-    for line in msg.splitlines():
-        server.say(line)
+worlds = {'minecraft:overworld': '§a主世界', 'minecraft:the_end': '§d末地', 'minecraft:the_nether': '§4地狱'}
 
 
 def joined_info(msg):
-    joined_player = re.match(
-        r'(\w+)\[([0-9\.:]+|local)\] logged in with entity id', msg)
+    joined_player = re.match(r'(\w+)\[([0-9\.:]+|local)\] logged in with entity id', msg)
     if joined_player:
         if joined_player.group(2) == 'local':
             return [True, 'bot', joined_player.group(1)]
@@ -28,9 +29,9 @@ def joined_info(msg):
 
 
 def get_player_pos(server, player):
-    PlayerInfoAPI = server.get_plugin_instance('PlayerInfoAPI')
-    dimension = PlayerInfoAPI.getPlayerInfo(server, player, 'Dimension')
-    pos = PlayerInfoAPI.getPlayerInfo(server, player, 'Pos')
+    minecraft_data_api = server.get_plugin_instance('minecraft_data_api')
+    dimension = minecraft_data_api.get_player_info(player, 'Dimension')
+    pos = minecraft_data_api.get_player_info(player, 'Pos')
     return {
         'player': player,
         'dimension': dimension,
@@ -43,10 +44,10 @@ def get_player_pos(server, player):
 def list_bot(server):
     new_list = []
     for bot in bot_list:
-        try:
-            new_list.append(get_player_pos(server, bot))
-        except:
-            bot_list.remove(bot)
+        # try:
+        new_list.append(get_player_pos(server, bot))
+    # except:
+    #     bot_list.remove(bot)
     return new_list
 
 
@@ -55,15 +56,15 @@ def msg_list_bot(server):
         return '§7服务器还没有假人'
     new_list = list_bot(server)
     msg = RTextList(RText("[假人列表]", color=RColor.gray))
+    server.logger.info(new_list)
     for bot in new_list:
-        msg += RTextList(
-            RText('\n[x] ', color=RColor.red)
-            .h('下线该假人')
-            .c(RAction.run_command, f'/player {bot["player"]} kill'),
-            RText(bot["player"])
-            .h(RText(f'[{worlds[bot["dimension"]]}§r] \n({bot["x"]},{bot["y"]},{bot["z"]}) '))
-        )
+        msg.append(RText('\n[x] ', color=RColor.red).h('下线该假人').c(RAction.run_command, f'/player {bot["player"]} kill'), RText(bot["player"]).h(RText(f'[{worlds[bot["dimension"]]}§r] \n({bot["x"]},{bot["y"]},{bot["z"]}) ')))
     return msg
+
+
+@new_thread("send_bot_list")
+def send_bot_list(server):
+    server.say(msg_list_bot(server))
 
 
 def on_info(server, info):
@@ -73,9 +74,8 @@ def on_info(server, info):
             server.say('§7假人[' + botinfo[2] + ']加入了游戏')
             bot_list.append(botinfo[2])
     elif info.is_player:
-        cmd = info.content.split()
-        if len(cmd) == 1 and cmd[0] == '!!botlist':
-            server.say(msg_list_bot(server))
+        if info.content == '!!botlist':
+            send_bot_list(server)
 
 
 def on_player_left(server, player):
