@@ -1,8 +1,12 @@
 import re
+from mcdreforged.api.types import PluginServerInterface, Info, CommandSource
 from mcdreforged.api.rtext import RTextList, RText, RAction, RColor
-from mcdreforged.api.all import new_thread
+from mcdreforged.api.command import Literal
+from mcdreforged.api.decorator import new_thread
 
 bot_list = []
+player_list = []
+
 
 worlds = {
     "minecraft:overworld": "§a主世界",
@@ -13,7 +17,7 @@ worlds = {
 
 def joined_info(msg):
     joined_player = re.match(
-        r"(\w+)\[([0-9\.:]+|local)\] logged in with entity id", msg
+        r"(\w+)\[([0-9\.\:\/]+|local)\] logged in with entity id", msg
     )
     if joined_player:
         if joined_player.group(2) == "local":
@@ -36,17 +40,14 @@ def get_player_pos(server, player):
     }
 
 
-def list_bot(server):
+def list_bot(server: PluginServerInterface):
     new_list = []
     for bot in bot_list:
-        # try:
         new_list.append(get_player_pos(server, bot))
-    # except:
-    #     bot_list.remove(bot)
     return new_list
 
 
-def msg_list_bot(server):
+def msg_list_bot(server: PluginServerInterface):
     if not len(bot_list):
         return "§7服务器还没有假人"
     new_list = list_bot(server)
@@ -67,33 +68,39 @@ def msg_list_bot(server):
 
 
 @new_thread("send_bot_list")
-def send_bot_list(server):
-    server.say(msg_list_bot(server))
+def send_bot_list(src: CommandSource):
+    src.reply(msg_list_bot(src.get_server()))
 
 
-def on_info(server, info):
-    if info.source == 0 and not info.is_player:
-        botinfo = joined_info(info.content)
-        if botinfo[0] and botinfo[1] == "bot" and botinfo[2] not in bot_list:
+def on_info(server: PluginServerInterface, info: Info):
+    botinfo = joined_info(info.content)
+    if botinfo[0]:
+        if botinfo[1] == "bot":
             server.say("§7假人[" + botinfo[2] + "]加入了游戏")
             bot_list.append(botinfo[2])
-    elif info.is_player:
-        if info.content == "!!botlist":
-            send_bot_list(server)
+        elif botinfo[1] == "player":
+            player_list.append(botinfo[2])
 
 
-def on_player_left(server, player):
-    if player in bot_list:
+def on_player_left(server: PluginServerInterface, player):
+    if player in bot_list and player in player_list:
+        player_list.remove(player)
+    elif player in player_list:
+        player_list.remove(player)
+    elif player in bot_list:
         bot_list.remove(player)
         server.say("§7假人[" + player + "]离开了游戏")
 
 
-def on_load(server, old_module):
-    global bot_list
-    if old_module and type(old_module.bot_list) == type(bot_list):
+def on_load(server: PluginServerInterface, old_module):
+    global bot_list, player_list
+    server.register_command(Literal("!!botlist").runs(lambda src: send_bot_list(src)))
+    if old_module is not None:
         bot_list = old_module.bot_list
+        player_list = old_module.player_list
 
 
 def on_server_startup(server):
-    global bot_list
+    global bot_list, player_list
     bot_list = []
+    player_list = []
