@@ -52,7 +52,6 @@ def msg_list_bot(server: PluginServerInterface):
         return "§7服务器还没有假人"
     new_list = list_bot(server)
     msg = RTextList(RText("[假人列表]", color=RColor.gray))
-    server.logger.info(new_list)
     for bot in new_list:
         msg.append(
             RText("\n[x] ", color=RColor.red)
