@@ -1,6 +1,6 @@
 {
     "id": "carpetbotlist",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "name": "CarpetBotList",
     "description": { "en_us": "Help you manage your carpet fake player", "zh_cn": "帮助你管理地毯端假人" },
     "author": ["ZeroKelvin"],

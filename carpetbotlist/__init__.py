@@ -21,10 +21,10 @@ def joined_info(msg):
     )
     if joined_player:
         if joined_player.group(2) == "local":
-            return [True, "bot", joined_player.group(1)]
+            return (True, "bot", joined_player.group(1))
         else:
-            return [True, "player", joined_player.group(1)]
-    return [False]
+            return (True, "player", joined_player.group(1))
+    return (False,)
 
 
 def get_player_pos(server, player):
@@ -71,7 +71,7 @@ def send_bot_list(src: CommandSource):
     src.reply(msg_list_bot(src.get_server()))
 
 
-def on_info(server: PluginServerInterface, info: Info):
+def on_player_joined(server: PluginServerInterface, player: str, info: Info):
     botinfo = joined_info(info.content)
     if botinfo[0]:
         if botinfo[1] == "bot":
