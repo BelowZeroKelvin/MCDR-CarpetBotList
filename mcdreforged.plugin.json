@@ -3,7 +3,10 @@
     "version": "2.1.1",
     "name": "CarpetBotList",
     "description": { "en_us": "Help you manage your carpet fake player", "zh_cn": "帮助你管理地毯端假人" },
-    "author": ["ZeroKelvin"],
+    "author": [
+        "ZeroKelvin",
+        "yuyi2439"
+    ],
     "link": "https://github.com/BelowZeroKelvin/MCDR-CarpetBotList",
     "dependencies": {
         "mcdreforged": "^2.0.0-beta.1",
